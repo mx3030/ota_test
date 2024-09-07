@@ -76,6 +76,7 @@ help:
 	@echo "  compile        	- Compile the source code"
 	@echo "  build 				- Run partition, spiffs and compile"
 	@echo "  flash-bootloader 	- Flash bootloader"
+	@echo "  flash-partition 	- Flash parition table"
 	@echo "  flash-spiffs   	- Flash SPIFFS"
 	@echo "  flash-app      	- Flash application"
 	@echo "  flash-all      	- Flash bootloader, SPIFFS, and application"
@@ -128,25 +129,35 @@ ARDUINO_CLI_APP_BIN := $(BUILD_DIR)/$(SRC).bin
 # Build target
 build: partition spiffs compile
 
-# Flashing commands
-ESPTOOL_FLASH := python3 $(ESPTOOL) --port $(PORT) --baud $(BAUDRATE) --chip esp32 --before default_reset --after hard_reset write_flash -z
-FLASH_COMMAND_BOOTLOADER := 0x1000 $(ARDUINO_CLI_BOOTLOADER_BIN)
-FLASH_COMMAND_SPIFFS := $(SPIFFS_START) $(SPIFFS_BIN)
-FLASH_COMMAND_APP := $(APP_START) $(ARDUINO_CLI_APP_BIN)
+# Flash command
+ESPTOOL_FLASH := python3 $(ESPTOOL) --port $(PORT) --baud $(BAUDRATE) --chip esp32 --before default_reset --after hard_reset write_flash --flash_freq 40m -z
 
 # Flash bootloader target
 flash-bootloader:
 	@echo "Flashing bootloader..."
 	@echo "Using bootloader binary: $(ARDUINO_CLI_BOOTLOADER_BIN)"
-	$(ESPTOOL_FLASH) $(FLASH_COMMAND_BOOTLOADER)
+	$(ESPTOOL_FLASH) 0x1000 $(ARDUINO_CLI_BOOTLOADER_BIN)
 	@echo "Bootloader flashed"
+
+# Flash partition target
+flash-partition:
+	@if [ -f "$(CUSTOM_PARTITIONS_BIN)" ]; then \
+		echo "Flashing custom partition table..."; \
+		echo "Using custom partition binary: $(CUSTOM_PARTITIONS_BIN)"; \
+		$(ESPTOOL_FLASH) 0x8000 $(CUSTOM_PARTITIONS_BIN); \
+	else \
+		echo "Custom partition binary not found, flashing Arduino CLI partition binary..."; \
+		echo "Using Arduino CLI partition binary: $(ARDUINO_CLI_PARTITIONS_BIN)"; \
+		$(ESPTOOL_FLASH) 0x8000 $(ARDUINO_CLI_PARTITIONS_BIN); \
+	fi
+	@echo "Partition table flashed"
 
 # Flash SPIFFS target
 flash-spiffs:
-	@if [ -n "$(SPIFFS_START)" ]; then \
+	@if [ "$(SPIFFS_PRESENT)" = "true" ]; then \
 		echo "Flashing SPIFFS..."; \
 		echo "Using SPIFFS binary: $(SPIFFS_BIN) at address $(SPIFFS_START)"; \
-		$(ESPTOOL_FLASH) $(FLASH_COMMAND_SPIFFS); \
+		$(ESPTOOL_FLASH) $(SPIFFS_START) $(SPIFFS_BIN); \
 		echo "SPIFFS flashed"; \
 	else \
 		echo "No SPIFFS entry found in partition file."; \
@@ -156,23 +167,10 @@ flash-spiffs:
 flash-app:
 	@echo "Flashing application..."
 	@echo "Using application binary: $(ARDUINO_CLI_APP_BIN) at address $(APP_START)"
-	$(ESPTOOL_FLASH) $(FLASH_COMMAND_APP)
+	$(ESPTOOL_FLASH) $(APP_START) $(ARDUINO_CLI_APP_BIN)
 	@echo "Application flashed"
 
-# Flash all target
-flash-all:
-	@echo "Flashing all components..."
-	@echo "Bootloader: $(ARDUINO_CLI_BOOTLOADER_BIN)"
-	@echo "Using bootloader command: $(FLASH_COMMAND_BOOTLOADER)"
-	@COMMAND="$(FLASH_COMMAND_BOOTLOADER)"; \
-	if [ "$(SPIFFS_PRESENT)" = "true" ]; then \
-		echo "SPIFFS: $(SPIFFS_BIN) at address $(SPIFFS_START)"; \
-		COMMAND="$$COMMAND $(FLASH_COMMAND_SPIFFS)"; \
-	fi; \
-	COMMAND="$$COMMAND $(FLASH_COMMAND_APP)"; \
-	echo "Final FLASH Command: $(ESPTOOL_FLASH) $$COMMAND"; \
-	$(ESPTOOL_FLASH) $$COMMAND
-	@echo "All components flashed"
+flash-all: flash-bootloader flash-partition flash-spiffs flash-app
 
 # OTA targets
 ota-app:
