@@ -11,7 +11,7 @@ void setup() {
 
 void loop() {
     OTA_Module::otaServer->handleClient();
-    Serial.println("Test432432");
+    Serial.println("Test100");
     delay(1000);
 }
 
