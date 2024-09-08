@@ -1,17 +1,15 @@
 #include "WiFi_Module.h"
+#include "Server_Module.h"
 #include "OTA_Module.h"
 
 void setup() {
     Serial.begin(115200);
     WiFi_Module::connect(DEFAULT_NETWORK_SETTINGS);
-    //WiFi_Module::connect(WLAN_7270_SETTINGS);
-    OTA_Module::init(); 
-    OTA_Module::initServer();
+    Server_Module::start();
+    OTA_Module::init(Server_Module::server); 
 }
 
 void loop() {
-    OTA_Module::otaServer->handleClient();
-    Serial.println("Test206");
+    Serial.println("Test208");
     delay(1000);
 }
-

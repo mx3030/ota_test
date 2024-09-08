@@ -11,6 +11,7 @@ OTA_PORT = 8266
 ESP_MODULES_DIR = $(HOME)/code/esp_modules
 
 INCLUDES = $(ESP_MODULES_DIR)/ota_module/ \
+		   $(ESP_MODULES_DIR)/server_module/ \
 		   $(ESP_MODULES_DIR)/wifi_module/
 
 ################################################################################
