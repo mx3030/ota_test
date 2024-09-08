@@ -193,7 +193,7 @@ ota-spiffs:
 # Run targets
 run: compile flash-app
 
-run-all: partition spiffs compile flash-all
+run-all: erase partition spiffs compile flash-all
 
 run-ota: compile ota-app
 
