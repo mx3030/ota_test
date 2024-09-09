@@ -1,4 +1,5 @@
 #include "WiFi_Module.h"
+//#inlcude "MQTT_Module.h"
 #include "Server_Module.h"
 #include "WS_Module.h"
 #include "OTA_Module.h"
@@ -9,7 +10,7 @@
 void handleOTAMessage(JSONVar message) {
     if (strcmp((const char*)message["topic"], "ota") == 0) {
         const char* url = (const char*)message["data"];
-        OTA_Module::handleDownloadFromURL(url);  
+        OTA_Module::handleAppDownloadFromURL(url);  
     }
 }
 

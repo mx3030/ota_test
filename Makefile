@@ -6,7 +6,8 @@ SRC = ota_test.ino
 CUSTOM_PARTITION = custom_partition.csv
 SPIFFS_DIR = spiffs
 ESP32_IP_ADDRESS = 192.168.178.129
-OTA_PORT = 8266
+OTA_APP_UPLOAD_ADDRESS = $(ESP32_IP_ADDRESS)/ota
+OTA_SPIFFS_UPLOAD_ADDRESS = $(ESP32_IP_ADDRESS)/spiffs
 
 ESP_MODULES_DIR = $(HOME)/code/esp_modules
 
@@ -38,8 +39,8 @@ ESPTOOL_PATH = $(shell grep 'runtime.tools.esptool_py.path=' $(PROPS_FILE) | sed
 ESPTOOL = $(ESPTOOL_PATH)/esptool.py
 $(info ESPTOOL_PATH: $(ESPTOOL))
 
-ESPOTA_CMD = $(shell grep 'tools.esptool_py.network_cmd=' $(PROPS_FILE) | sed 's/tools.esptool_py.network_cmd=//')
-$(info ESPOTA_CMD: $(ESPOTA_CMD))
+#ESPOTA_CMD = $(shell grep 'tools.esptool_py.network_cmd=' $(PROPS_FILE) | sed 's/tools.esptool_py.network_cmd=//')
+#$(info ESPOTA_CMD: $(ESPOTA_CMD))
 
 ESP32PART_CMD = $(shell grep 'tools.gen_esp32part.cmd=' $(PROPS_FILE) | sed 's/tools.gen_esp32part.cmd=//')
 $(info ESP32PART_CMD: $(ESP32PART_CMD))
@@ -178,18 +179,15 @@ flash-all: flash-bootloader flash-partition flash-spiffs flash-app
 ota-app:
 	@echo "Uploading application via OTA..."
 	@echo "Using application binary: $(ARDUINO_CLI_APP_BIN)"
-	$(ESPOTA_CMD) -i $(ESP32_IP_ADDRESS) -p $(OTA_PORT) -f $(ARDUINO_CLI_APP_BIN)
+	@curl -f -w "%{http_code}" -o /dev/null -F "file=@$(ARDUINO_CLI_APP_BIN)" $(OTA_APP_UPLOAD_ADDRESS) || (echo "Failed to upload application via OTA" && exit 1)
 	@echo "Application uploaded via OTA"
 
+
 ota-spiffs:
-	@if [ "$(SPIFFS_PRESENT)" = "true" ]; then \
-		echo "Uploading SPIFFS via OTA..."; \
-		echo "Using SPIFFS binary: $(SPIFFS_BIN)"; \
-		$(ESPOTA_CMD) -i $(ESP32_IP_ADDRESS) -p $(OTA_PORT) -s -f $(SPIFFS_BIN); \
-		echo "SPIFFS uploaded via OTA"; \
-	else \
-		echo "No SPIFFS entry found in partition file or SPIFFS directory does not exist."; \
-	fi
+	@echo "Uploading application via OTA..."
+	@echo "Using application binary: $(SPIFFS_BIN)"
+	@curl -f -w "%{http_code}" -o /dev/null -F "file=@$(SPIFFS_BIN)" $(OTA_SPIFFS_UPLOAD_ADDRESS) || (echo "Failed to upload application via OTA" && exit 1)
+	@echo "Application uploaded via OTA"
 
 # Run targets
 run: compile flash-app
