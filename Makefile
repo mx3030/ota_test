@@ -10,8 +10,9 @@ OTA_PORT = 8266
 
 ESP_MODULES_DIR = $(HOME)/code/esp_modules
 
-INCLUDES = $(ESP_MODULES_DIR)/ota_module/ \
-		   $(ESP_MODULES_DIR)/server_module/ \
+INCLUDES = $(ESP_MODULES_DIR)/ota_module/ 		\
+		   $(ESP_MODULES_DIR)/server_module/ 	\
+		   $(ESP_MODULES_DIR)/ws_module/ 		\
 		   $(ESP_MODULES_DIR)/wifi_module/
 
 ################################################################################
@@ -215,4 +216,3 @@ clean:
 	@echo "Cleaning build directory..."
 	rm -rf $(BUILD_DIR) $(PROPS_FILE)
 	@echo "Build directory cleaned"
-
